@@ -1,0 +1,22 @@
+{
+  "info": {
+    "name": "Test API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ping prueba",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://postman-echo.com/get",
+          "protocol": "https",
+          "host": ["postman-echo", "com"],
+          "path": ["get"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
