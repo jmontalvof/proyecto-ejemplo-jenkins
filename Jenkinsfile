@@ -2,9 +2,9 @@ pipeline {
   agent { label 'agente-docker' }
 
   environment {
+    MAVEN_HOME = tool 'Maven 3.9.6'
     DOCKER_REPO = 'docker.io/usuario/demoapp'
     TAG = 'latest'
-    MAVEN_HOME = tool 'Maven 3.9.6'
   }
 
   stages {
@@ -26,17 +26,32 @@ pipeline {
       }
     }
 
-    stage('Kaniko Build') {
+    stage('Build y push con Kaniko') {
       steps {
         withCredentials([usernamePassword(credentialsId: 'DOCKER_CREDENTIALS', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
           script {
-            def authConfig = '{\n  "auths": {\n    "https://index.docker.io/v1/": {\n      "username": "' + DOCKER_USER + '",\n      "password": "' + DOCKER_PASS + '"\n    }\n  }\n}'
-            writeFile file: 'kaniko/.docker/config.json', text: authConfig
-          }
+            // Genera el fichero de autenticación para Kaniko
+            def dockerConfig = """{
+  "auths": {
+    "https://index.docker.io/v1/": {
+      "username": "${DOCKER_USER}",
+      "password": "${DOCKER_PASS}"
+    }
+  }
+}"""
+            writeFile file: 'kaniko/config.json', text: dockerConfig
 
-          sh '''
-            docker exec kaniko /kaniko/executor               --dockerfile=Dockerfile               --context=/workspace               --destination=${DOCKER_REPO}:${TAG}               --skip-tls-verify
-          '''
+            // Ejecuta Kaniko en su contenedor
+            sh """
+              docker exec kaniko /kaniko/executor \
+                --dockerfile=Dockerfile \
+                --context=/workspace \
+                --destination=${DOCKER_REPO}:${TAG} \
+                --skip-tls-verify \
+                --verbosity=info \
+                --docker-config=kaniko
+            """
+          }
         }
       }
     }
