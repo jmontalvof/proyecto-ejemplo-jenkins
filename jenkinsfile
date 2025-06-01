@@ -1,0 +1,52 @@
+pipeline {
+  agent any
+
+  tools {
+    maven 'Maven 3.8.6' // Asegúrate que ese nombre está en Manage Jenkins > Tools
+  }
+
+  environment {
+    // ID del SonarQube configurado
+    SONARQUBE_ENV = 'SonarQubeServer'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git url: 'https://github.com/jmontalvof/proyecto-ejemplo-jenkins.git', branch: 'main'
+      }
+    }
+
+    stage('Build') {
+      steps {
+        sh 'mvn clean package -DskipTests'
+      }
+    }
+
+    stage('SonarQube Analysis') {
+      steps {
+        withSonarQubeEnv("${env.SONARQUBE_ENV}") {
+          sh 'mvn sonar:sonar -Dsonar.projectKey=proyecto-ejemplo -Dsonar.projectName=proyecto-ejemplo'
+        }
+      }
+    }
+
+    // Descomenta esta sección si ya tienes Nexus configurado:
+    /*
+    stage('Deploy to Nexus') {
+      steps {
+        sh 'mvn deploy'
+      }
+    }
+    */
+  }
+
+  post {
+    success {
+      echo 'Pipeline completada con éxito 🎉'
+    }
+    failure {
+      echo 'Falló la ejecución ❌'
+    }
+  }
+}
